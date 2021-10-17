@@ -11,7 +11,7 @@ const string PENDING_QUEUE_FILENAME = "pending-hits.csv";
 // Every URL in the file should be added to a tally map.
 // The tally map values will be added to the page_entries map
 // Lastly, the old page entries database will be replaced
-// with a new one, reflecting the updated page_entries map data!
+// with a new one, reflecting the updated page_entries map data.
 
 int main(string[] args) {
     Map<string, File> required_files = retrieve_required_files ();
