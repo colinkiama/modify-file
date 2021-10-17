@@ -7,13 +7,7 @@ const string DATABASE_FILENAME = "hits.csv";
 const string TEMP_DATABASE_FILENAME = "temp-hits.csv";
 const string PENDING_QUEUE_FILENAME = "pending-hits.csv";
 
-// TODO: Load from another file that is a list of urls. 
-// (Represents action queue file that will be used to batch page entry updates
-// Every URL in the file should be added to a tally map.
-// The tally map values will be added to the page_entries map
-// Lastly, the old page entries database will be replaced
-// with a new one, reflecting the updated page_entries map data!
-
+// TODO: In README, add instructions for creating required database and temp hits files.
 int main(string[] args) {
     Map<string, File> required_files = retrieve_required_files ();
 
