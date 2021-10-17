@@ -7,7 +7,6 @@ const string DATABASE_FILENAME = "hits.csv";
 const string TEMP_DATABASE_FILENAME = "temp-hits.csv";
 const string PENDING_QUEUE_FILENAME = "pending-hits.csv";
 
-// TODO: In README, add instructions for creating required database and temp hits files.
 int main(string[] args) {
     Map<string, File> required_files = retrieve_required_files ();
 
