@@ -23,6 +23,9 @@ void assert_required_files_exist (GeeMap* required_files,
                                   GError** error);
 GeeMap* load_page_entries (GFile* database_file);
 void print_page_entries (GeeMap* page_entries);
+GeeIterable* load_pending_hits (GFile* pending_hits_file);
+void apply_pending_hits_to (GeeMap* page_entries,
+                            GeeIterable* pending_hits);
 static void _vala_array_destroy (gpointer array,
                           gint array_length,
                           GDestroyNotify destroy_func);
@@ -42,23 +45,28 @@ _vala_main (gchar** args,
 	GFile* _tmp5_;
 	GeeMap* _tmp6_;
 	GeeMap* _tmp7_;
+	GeeIterable* pending_hits = NULL;
+	gpointer _tmp8_;
+	GFile* _tmp9_;
+	GeeIterable* _tmp10_;
+	GeeIterable* _tmp11_;
 	GError* _inner_error0_ = NULL;
 	gint result = 0;
 #line 17 "../src/main.vala"
 	_tmp0_ = retrieve_required_files ();
 #line 17 "../src/main.vala"
 	required_files = _tmp0_;
-#line 52 "main.c"
+#line 60 "main.c"
 	{
 #line 20 "../src/main.vala"
 		assert_required_files_exist (required_files, &_inner_error0_);
 #line 20 "../src/main.vala"
 		if (G_UNLIKELY (_inner_error0_ != NULL)) {
-#line 58 "main.c"
+#line 66 "main.c"
 			gint _tmp1_ = -1;
 #line 20 "../src/main.vala"
 			if (_inner_error0_->domain == G_IO_ERROR) {
-#line 62 "main.c"
+#line 70 "main.c"
 				goto __catch0_g_io_error;
 			}
 #line 20 "../src/main.vala"
@@ -69,7 +77,7 @@ _vala_main (gchar** args,
 			g_clear_error (&_inner_error0_);
 #line 20 "../src/main.vala"
 			return _tmp1_;
-#line 73 "main.c"
+#line 81 "main.c"
 		}
 	}
 	goto __finally0;
@@ -87,12 +95,12 @@ _vala_main (gchar** args,
 		g_error ("main.vala:22: Error: %s", _tmp2_);
 #line 19 "../src/main.vala"
 		_g_error_free0 (e);
-#line 91 "main.c"
+#line 99 "main.c"
 	}
 	__finally0:
 #line 19 "../src/main.vala"
 	if (G_UNLIKELY (_inner_error0_ != NULL)) {
-#line 96 "main.c"
+#line 104 "main.c"
 		gint _tmp3_ = -1;
 #line 19 "../src/main.vala"
 		_g_object_unref0 (required_files);
@@ -102,7 +110,7 @@ _vala_main (gchar** args,
 		g_clear_error (&_inner_error0_);
 #line 19 "../src/main.vala"
 		return _tmp3_;
-#line 106 "main.c"
+#line 114 "main.c"
 	}
 #line 25 "../src/main.vala"
 	_tmp4_ = gee_map_get (required_files, DATABASE_FILENAME);
@@ -119,14 +127,34 @@ _vala_main (gchar** args,
 #line 26 "../src/main.vala"
 	print_page_entries (page_entries);
 #line 28 "../src/main.vala"
+	_tmp8_ = gee_map_get (required_files, PENDING_QUEUE_FILENAME);
+#line 28 "../src/main.vala"
+	_tmp9_ = (GFile*) _tmp8_;
+#line 28 "../src/main.vala"
+	_tmp10_ = load_pending_hits (_tmp9_);
+#line 28 "../src/main.vala"
+	_tmp11_ = _tmp10_;
+#line 28 "../src/main.vala"
+	_g_object_unref0 (_tmp9_);
+#line 28 "../src/main.vala"
+	pending_hits = _tmp11_;
+#line 29 "../src/main.vala"
+	apply_pending_hits_to (page_entries, pending_hits);
+#line 31 "../src/main.vala"
+	g_print ("Update page entries:");
+#line 32 "../src/main.vala"
+	print_page_entries (page_entries);
+#line 34 "../src/main.vala"
 	result = 0;
-#line 28 "../src/main.vala"
+#line 34 "../src/main.vala"
+	_g_object_unref0 (pending_hits);
+#line 34 "../src/main.vala"
 	_g_object_unref0 (page_entries);
-#line 28 "../src/main.vala"
+#line 34 "../src/main.vala"
 	_g_object_unref0 (required_files);
-#line 28 "../src/main.vala"
+#line 34 "../src/main.vala"
 	return result;
-#line 130 "main.c"
+#line 158 "main.c"
 }
 
 int
@@ -135,7 +163,252 @@ main (int argc,
 {
 #line 16 "../src/main.vala"
 	return _vala_main (argv, argc);
-#line 139 "main.c"
+#line 167 "main.c"
+}
+
+void
+apply_pending_hits_to (GeeMap* page_entries,
+                       GeeIterable* pending_hits)
+{
+#line 37 "../src/main.vala"
+	g_return_if_fail (page_entries != NULL);
+#line 37 "../src/main.vala"
+	g_return_if_fail (pending_hits != NULL);
+#line 178 "main.c"
+	{
+		GeeIterator* _url_it = NULL;
+		GeeIterator* _tmp0_;
+#line 38 "../src/main.vala"
+		_tmp0_ = gee_iterable_iterator (pending_hits);
+#line 38 "../src/main.vala"
+		_url_it = _tmp0_;
+#line 38 "../src/main.vala"
+		while (TRUE) {
+#line 188 "main.c"
+			GeeIterator* _tmp1_;
+			gchar* url = NULL;
+			GeeIterator* _tmp2_;
+			gpointer _tmp3_;
+			guint _tmp4_ = 0U;
+			const gchar* _tmp5_;
+			const gchar* _tmp8_;
+#line 38 "../src/main.vala"
+			_tmp1_ = _url_it;
+#line 38 "../src/main.vala"
+			if (!gee_iterator_next (_tmp1_)) {
+#line 38 "../src/main.vala"
+				break;
+#line 202 "main.c"
+			}
+#line 38 "../src/main.vala"
+			_tmp2_ = _url_it;
+#line 38 "../src/main.vala"
+			_tmp3_ = gee_iterator_get (_tmp2_);
+#line 38 "../src/main.vala"
+			url = (gchar*) _tmp3_;
+#line 39 "../src/main.vala"
+			_tmp5_ = url;
+#line 39 "../src/main.vala"
+			if (gee_map_has_key (page_entries, _tmp5_)) {
+#line 214 "main.c"
+				const gchar* _tmp6_;
+				gpointer _tmp7_;
+#line 40 "../src/main.vala"
+				_tmp6_ = url;
+#line 40 "../src/main.vala"
+				_tmp7_ = gee_map_get (page_entries, _tmp6_);
+#line 40 "../src/main.vala"
+				_tmp4_ = ((guint) ((guintptr) _tmp7_)) + 1;
+#line 223 "main.c"
+			} else {
+#line 41 "../src/main.vala"
+				_tmp4_ = (guint) 1;
+#line 227 "main.c"
+			}
+#line 39 "../src/main.vala"
+			_tmp8_ = url;
+#line 39 "../src/main.vala"
+			gee_map_set (page_entries, _tmp8_, (gpointer) ((guintptr) _tmp4_));
+#line 38 "../src/main.vala"
+			_g_free0 (url);
+#line 235 "main.c"
+		}
+#line 38 "../src/main.vala"
+		_g_object_unref0 (_url_it);
+#line 239 "main.c"
+	}
+}
+
+static gchar*
+string_strip (const gchar* self)
+{
+	gchar* _result_ = NULL;
+	gchar* _tmp0_;
+	gchar* result = NULL;
+#line 1359 "glib-2.0.vapi"
+	g_return_val_if_fail (self != NULL, NULL);
+#line 1360 "glib-2.0.vapi"
+	_tmp0_ = g_strdup (self);
+#line 1360 "glib-2.0.vapi"
+	_result_ = _tmp0_;
+#line 1361 "glib-2.0.vapi"
+	g_strstrip (_result_);
+#line 1362 "glib-2.0.vapi"
+	result = _result_;
+#line 1362 "glib-2.0.vapi"
+	return result;
+#line 261 "main.c"
+}
+
+GeeIterable*
+load_pending_hits (GFile* pending_hits_file)
+{
+	GeeAbstractCollection* pending_hits = NULL;
+	GeeArrayList* _tmp0_;
+	GError* _inner_error0_ = NULL;
+	GeeIterable* result = NULL;
+#line 45 "../src/main.vala"
+	g_return_val_if_fail (pending_hits_file != NULL, NULL);
+#line 46 "../src/main.vala"
+	_tmp0_ = gee_array_list_new (G_TYPE_STRING, (GBoxedCopyFunc) g_strdup, (GDestroyNotify) g_free, NULL, NULL, NULL);
+#line 46 "../src/main.vala"
+	pending_hits = (GeeAbstractCollection*) _tmp0_;
+#line 277 "main.c"
+	{
+		GFileInputStream* _tmp1_ = NULL;
+		GFileInputStream* _tmp2_;
+		GDataInputStream* data_input_stream = NULL;
+		GDataInputStream* _tmp3_;
+		gchar* line = NULL;
+#line 49 "../src/main.vala"
+		_tmp2_ = g_file_read (pending_hits_file, NULL, &_inner_error0_);
+#line 49 "../src/main.vala"
+		_tmp1_ = _tmp2_;
+#line 49 "../src/main.vala"
+		if (G_UNLIKELY (_inner_error0_ != NULL)) {
+#line 290 "main.c"
+			goto __catch0_g_error;
+		}
+#line 49 "../src/main.vala"
+		_tmp3_ = g_data_input_stream_new ((GInputStream*) _tmp1_);
+#line 49 "../src/main.vala"
+		data_input_stream = _tmp3_;
+#line 53 "../src/main.vala"
+		while (TRUE) {
+#line 299 "main.c"
+			gchar* _tmp4_ = NULL;
+			GDataInputStream* _tmp5_;
+			gchar* _tmp6_;
+			gchar* _tmp7_;
+			const gchar* _tmp8_;
+			const gchar* _tmp9_;
+			gchar* _tmp10_;
+			gchar* _tmp11_;
+			gboolean _tmp12_;
+			GeeAbstractCollection* _tmp13_;
+			const gchar* _tmp14_;
+#line 53 "../src/main.vala"
+			_tmp5_ = data_input_stream;
+#line 53 "../src/main.vala"
+			_tmp6_ = g_data_input_stream_read_line (_tmp5_, NULL, NULL, &_inner_error0_);
+#line 53 "../src/main.vala"
+			_tmp4_ = _tmp6_;
+#line 53 "../src/main.vala"
+			if (G_UNLIKELY (_inner_error0_ != NULL)) {
+#line 53 "../src/main.vala"
+				_g_free0 (line);
+#line 53 "../src/main.vala"
+				_g_object_unref0 (data_input_stream);
+#line 53 "../src/main.vala"
+				_g_object_unref0 (_tmp1_);
+#line 325 "main.c"
+				goto __catch0_g_error;
+			}
+#line 53 "../src/main.vala"
+			_tmp7_ = _tmp4_;
+#line 53 "../src/main.vala"
+			_tmp4_ = NULL;
+#line 53 "../src/main.vala"
+			_g_free0 (line);
+#line 53 "../src/main.vala"
+			line = _tmp7_;
+#line 53 "../src/main.vala"
+			_tmp8_ = line;
+#line 53 "../src/main.vala"
+			if (!(_tmp8_ != NULL)) {
+#line 53 "../src/main.vala"
+				_g_free0 (_tmp4_);
+#line 53 "../src/main.vala"
+				break;
+#line 344 "main.c"
+			}
+#line 54 "../src/main.vala"
+			_tmp9_ = line;
+#line 54 "../src/main.vala"
+			_tmp10_ = string_strip (_tmp9_);
+#line 54 "../src/main.vala"
+			_tmp11_ = _tmp10_;
+#line 54 "../src/main.vala"
+			_tmp12_ = g_strcmp0 (_tmp11_, "") == 0;
+#line 54 "../src/main.vala"
+			_g_free0 (_tmp11_);
+#line 54 "../src/main.vala"
+			if (_tmp12_) {
+#line 55 "../src/main.vala"
+				_g_free0 (_tmp4_);
+#line 55 "../src/main.vala"
+				continue;
+#line 362 "main.c"
+			}
+#line 58 "../src/main.vala"
+			_tmp13_ = pending_hits;
+#line 58 "../src/main.vala"
+			_tmp14_ = line;
+#line 58 "../src/main.vala"
+			gee_abstract_collection_add (_tmp13_, _tmp14_);
+#line 53 "../src/main.vala"
+			_g_free0 (_tmp4_);
+#line 372 "main.c"
+		}
+#line 61 "../src/main.vala"
+		result = (GeeIterable*) pending_hits;
+#line 61 "../src/main.vala"
+		_g_free0 (line);
+#line 61 "../src/main.vala"
+		_g_object_unref0 (data_input_stream);
+#line 61 "../src/main.vala"
+		_g_object_unref0 (_tmp1_);
+#line 61 "../src/main.vala"
+		return result;
+#line 384 "main.c"
+	}
+	goto __finally0;
+	__catch0_g_error:
+	{
+		GError* e = NULL;
+		const gchar* _tmp15_;
+#line 48 "../src/main.vala"
+		e = _inner_error0_;
+#line 48 "../src/main.vala"
+		_inner_error0_ = NULL;
+#line 64 "../src/main.vala"
+		_tmp15_ = e->message;
+#line 64 "../src/main.vala"
+		g_error ("main.vala:64: %s", _tmp15_);
+#line 48 "../src/main.vala"
+		_g_error_free0 (e);
+#line 401 "main.c"
+	}
+	__finally0:
+#line 48 "../src/main.vala"
+	_g_object_unref0 (pending_hits);
+#line 48 "../src/main.vala"
+	g_critical ("file %s: line %d: uncaught error: %s (%s, %d)", __FILE__, __LINE__, _inner_error0_->message, g_quark_to_string (_inner_error0_->domain), _inner_error0_->code);
+#line 48 "../src/main.vala"
+	g_clear_error (&_inner_error0_);
+#line 48 "../src/main.vala"
+	return NULL;
+#line 412 "main.c"
 }
 
 static guint
@@ -149,7 +422,7 @@ uint_parse (const gchar* str,
 	result = (guint) strtoul (str, NULL, (gint) _base);
 #line 214 "glib-2.0.vapi"
 	return result;
-#line 153 "main.c"
+#line 426 "main.c"
 }
 
 GeeMap*
@@ -157,9 +430,9 @@ load_page_entries (GFile* database_file)
 {
 	GError* _inner_error0_ = NULL;
 	GeeMap* result = NULL;
-#line 31 "../src/main.vala"
+#line 68 "../src/main.vala"
 	g_return_val_if_fail (database_file != NULL, NULL);
-#line 163 "main.c"
+#line 436 "main.c"
 	{
 		GeeMap* page_entries = NULL;
 		GeeHashMap* _tmp0_;
@@ -171,34 +444,34 @@ load_page_entries (GFile* database_file)
 		gint hits_position = 0;
 		gchar* line = NULL;
 		gboolean is_first_line = FALSE;
-#line 33 "../src/main.vala"
+#line 70 "../src/main.vala"
 		_tmp0_ = gee_hash_map_new (G_TYPE_STRING, (GBoxedCopyFunc) g_strdup, (GDestroyNotify) g_free, G_TYPE_UINT, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-#line 33 "../src/main.vala"
+#line 70 "../src/main.vala"
 		page_entries = (GeeMap*) _tmp0_;
-#line 37 "../src/main.vala"
+#line 74 "../src/main.vala"
 		_tmp2_ = g_file_read (database_file, NULL, &_inner_error0_);
-#line 37 "../src/main.vala"
+#line 74 "../src/main.vala"
 		_tmp1_ = _tmp2_;
-#line 37 "../src/main.vala"
+#line 74 "../src/main.vala"
 		if (G_UNLIKELY (_inner_error0_ != NULL)) {
-#line 37 "../src/main.vala"
+#line 74 "../src/main.vala"
 			_g_object_unref0 (page_entries);
-#line 187 "main.c"
+#line 460 "main.c"
 			goto __catch0_g_error;
 		}
-#line 37 "../src/main.vala"
+#line 74 "../src/main.vala"
 		_tmp3_ = g_data_input_stream_new ((GInputStream*) _tmp1_);
-#line 37 "../src/main.vala"
+#line 74 "../src/main.vala"
 		data_input_stream = _tmp3_;
-#line 39 "../src/main.vala"
+#line 76 "../src/main.vala"
 		url_position = -1;
-#line 40 "../src/main.vala"
+#line 77 "../src/main.vala"
 		hits_position = -1;
-#line 43 "../src/main.vala"
+#line 80 "../src/main.vala"
 		is_first_line = TRUE;
-#line 46 "../src/main.vala"
+#line 83 "../src/main.vala"
 		while (TRUE) {
-#line 202 "main.c"
+#line 475 "main.c"
 			gchar* _tmp4_ = NULL;
 			GDataInputStream* _tmp5_;
 			gchar* _tmp6_;
@@ -210,56 +483,56 @@ load_page_entries (GFile* database_file)
 			gchar** _tmp11_;
 			gint row_length1;
 			gint _row_size_;
-#line 46 "../src/main.vala"
+#line 83 "../src/main.vala"
 			_tmp5_ = data_input_stream;
-#line 46 "../src/main.vala"
+#line 83 "../src/main.vala"
 			_tmp6_ = g_data_input_stream_read_line (_tmp5_, NULL, NULL, &_inner_error0_);
-#line 46 "../src/main.vala"
+#line 83 "../src/main.vala"
 			_tmp4_ = _tmp6_;
-#line 46 "../src/main.vala"
+#line 83 "../src/main.vala"
 			if (G_UNLIKELY (_inner_error0_ != NULL)) {
-#line 46 "../src/main.vala"
+#line 83 "../src/main.vala"
 				_g_free0 (line);
-#line 46 "../src/main.vala"
+#line 83 "../src/main.vala"
 				_g_object_unref0 (data_input_stream);
-#line 46 "../src/main.vala"
+#line 83 "../src/main.vala"
 				_g_object_unref0 (_tmp1_);
-#line 46 "../src/main.vala"
+#line 83 "../src/main.vala"
 				_g_object_unref0 (page_entries);
-#line 230 "main.c"
+#line 503 "main.c"
 				goto __catch0_g_error;
 			}
-#line 46 "../src/main.vala"
+#line 83 "../src/main.vala"
 			_tmp7_ = _tmp4_;
-#line 46 "../src/main.vala"
+#line 83 "../src/main.vala"
 			_tmp4_ = NULL;
-#line 46 "../src/main.vala"
+#line 83 "../src/main.vala"
 			_g_free0 (line);
-#line 46 "../src/main.vala"
+#line 83 "../src/main.vala"
 			line = _tmp7_;
-#line 46 "../src/main.vala"
+#line 83 "../src/main.vala"
 			_tmp8_ = line;
-#line 46 "../src/main.vala"
+#line 83 "../src/main.vala"
 			if (!(_tmp8_ != NULL)) {
-#line 46 "../src/main.vala"
+#line 83 "../src/main.vala"
 				_g_free0 (_tmp4_);
-#line 46 "../src/main.vala"
+#line 83 "../src/main.vala"
 				break;
-#line 249 "main.c"
+#line 522 "main.c"
 			}
-#line 47 "../src/main.vala"
+#line 84 "../src/main.vala"
 			_tmp9_ = line;
-#line 47 "../src/main.vala"
+#line 84 "../src/main.vala"
 			_tmp11_ = _tmp10_ = g_strsplit (_tmp9_, ",", 0);
-#line 47 "../src/main.vala"
+#line 84 "../src/main.vala"
 			row = _tmp11_;
-#line 47 "../src/main.vala"
+#line 84 "../src/main.vala"
 			row_length1 = _vala_array_length (_tmp10_);
-#line 47 "../src/main.vala"
+#line 84 "../src/main.vala"
 			_row_size_ = row_length1;
-#line 49 "../src/main.vala"
+#line 86 "../src/main.vala"
 			if (!is_first_line) {
-#line 263 "main.c"
+#line 536 "main.c"
 				gboolean _tmp12_ = FALSE;
 				GeeMap* _tmp13_;
 				gchar** _tmp14_;
@@ -268,173 +541,173 @@ load_page_entries (GFile* database_file)
 				gchar** _tmp16_;
 				gint _tmp16__length1;
 				const gchar* _tmp17_;
-#line 51 "../src/main.vala"
+#line 88 "../src/main.vala"
 				if (url_position < 0) {
-#line 51 "../src/main.vala"
+#line 88 "../src/main.vala"
 					_tmp12_ = TRUE;
-#line 276 "main.c"
+#line 549 "main.c"
 				} else {
-#line 51 "../src/main.vala"
+#line 88 "../src/main.vala"
 					_tmp12_ = hits_position < 0;
-#line 280 "main.c"
+#line 553 "main.c"
 				}
-#line 51 "../src/main.vala"
+#line 88 "../src/main.vala"
 				if (_tmp12_) {
-#line 52 "../src/main.vala"
-					g_error ("main.vala:52: url and hits keys are not both defined");
-#line 286 "main.c"
+#line 89 "../src/main.vala"
+					g_error ("main.vala:89: url and hits keys are not both defined");
+#line 559 "main.c"
 				}
-#line 55 "../src/main.vala"
+#line 92 "../src/main.vala"
 				_tmp13_ = page_entries;
-#line 55 "../src/main.vala"
+#line 92 "../src/main.vala"
 				_tmp14_ = row;
-#line 55 "../src/main.vala"
+#line 92 "../src/main.vala"
 				_tmp14__length1 = row_length1;
-#line 55 "../src/main.vala"
+#line 92 "../src/main.vala"
 				_tmp15_ = _tmp14_[url_position];
-#line 55 "../src/main.vala"
+#line 92 "../src/main.vala"
 				_tmp16_ = row;
-#line 55 "../src/main.vala"
+#line 92 "../src/main.vala"
 				_tmp16__length1 = row_length1;
-#line 55 "../src/main.vala"
+#line 92 "../src/main.vala"
 				_tmp17_ = _tmp16_[hits_position];
-#line 55 "../src/main.vala"
+#line 92 "../src/main.vala"
 				gee_map_set (_tmp13_, _tmp15_, (gpointer) ((guintptr) uint_parse (_tmp17_, (guint) 0)));
-#line 56 "../src/main.vala"
+#line 93 "../src/main.vala"
 				row = (_vala_array_free (row, row_length1, (GDestroyNotify) g_free), NULL);
-#line 56 "../src/main.vala"
+#line 93 "../src/main.vala"
 				_g_free0 (_tmp4_);
-#line 56 "../src/main.vala"
+#line 93 "../src/main.vala"
 				continue;
-#line 310 "main.c"
+#line 583 "main.c"
 			}
 			{
 				gint i = 0;
 				gchar** _tmp18_;
 				gint _tmp18__length1;
-#line 59 "../src/main.vala"
+#line 96 "../src/main.vala"
 				_tmp18_ = row;
-#line 59 "../src/main.vala"
+#line 96 "../src/main.vala"
 				_tmp18__length1 = row_length1;
-#line 59 "../src/main.vala"
+#line 96 "../src/main.vala"
 				i = _tmp18__length1 - 1;
-#line 322 "main.c"
+#line 595 "main.c"
 				{
 					gboolean _tmp19_ = FALSE;
-#line 59 "../src/main.vala"
+#line 96 "../src/main.vala"
 					_tmp19_ = TRUE;
-#line 59 "../src/main.vala"
+#line 96 "../src/main.vala"
 					while (TRUE) {
-#line 329 "main.c"
+#line 602 "main.c"
 						gchar** _tmp21_;
 						gint _tmp21__length1;
 						const gchar* _tmp22_;
 						const gchar* _tmp23_;
 						GQuark _tmp25_ = 0U;
-#line 59 "../src/main.vala"
+#line 96 "../src/main.vala"
 						if (!_tmp19_) {
-#line 337 "main.c"
+#line 610 "main.c"
 							gint _tmp20_;
-#line 59 "../src/main.vala"
+#line 96 "../src/main.vala"
 							_tmp20_ = i;
-#line 59 "../src/main.vala"
+#line 96 "../src/main.vala"
 							i = _tmp20_ - 1;
-#line 343 "main.c"
+#line 616 "main.c"
 						}
-#line 59 "../src/main.vala"
+#line 96 "../src/main.vala"
 						_tmp19_ = FALSE;
-#line 59 "../src/main.vala"
+#line 96 "../src/main.vala"
 						if (!(i >= 0)) {
-#line 59 "../src/main.vala"
+#line 96 "../src/main.vala"
 							break;
-#line 351 "main.c"
+#line 624 "main.c"
 						}
-#line 60 "../src/main.vala"
+#line 97 "../src/main.vala"
 						_tmp21_ = row;
-#line 60 "../src/main.vala"
+#line 97 "../src/main.vala"
 						_tmp21__length1 = row_length1;
-#line 60 "../src/main.vala"
+#line 97 "../src/main.vala"
 						_tmp22_ = _tmp21_[i];
-#line 60 "../src/main.vala"
+#line 97 "../src/main.vala"
 						_tmp23_ = _tmp22_;
-#line 60 "../src/main.vala"
+#line 97 "../src/main.vala"
 						_tmp25_ = (NULL == _tmp23_) ? 0 : g_quark_from_string (_tmp23_);
-#line 60 "../src/main.vala"
+#line 97 "../src/main.vala"
 						if (_tmp25_ == g_quark_from_string (URL_KEY)) {
-#line 60 "../src/main.vala"
+#line 97 "../src/main.vala"
 							switch (0) {
-#line 367 "main.c"
+#line 640 "main.c"
 								default:
 								{
-#line 62 "../src/main.vala"
+#line 99 "../src/main.vala"
 									url_position = i;
-#line 63 "../src/main.vala"
+#line 100 "../src/main.vala"
 									continue;
-#line 374 "main.c"
+#line 647 "main.c"
 								}
 							}
 						} else if (_tmp25_ == g_quark_from_string (HITS_KEY)) {
-#line 60 "../src/main.vala"
+#line 97 "../src/main.vala"
 							switch (0) {
-#line 380 "main.c"
+#line 653 "main.c"
 								default:
 								{
-#line 65 "../src/main.vala"
+#line 102 "../src/main.vala"
 									hits_position = i;
-#line 66 "../src/main.vala"
+#line 103 "../src/main.vala"
 									continue;
-#line 387 "main.c"
+#line 660 "main.c"
 								}
 							}
 						}
 					}
 				}
 			}
-#line 69 "../src/main.vala"
+#line 106 "../src/main.vala"
 			is_first_line = FALSE;
-#line 46 "../src/main.vala"
+#line 83 "../src/main.vala"
 			row = (_vala_array_free (row, row_length1, (GDestroyNotify) g_free), NULL);
-#line 46 "../src/main.vala"
+#line 83 "../src/main.vala"
 			_g_free0 (_tmp4_);
-#line 400 "main.c"
+#line 673 "main.c"
 		}
-#line 72 "../src/main.vala"
+#line 109 "../src/main.vala"
 		result = page_entries;
-#line 72 "../src/main.vala"
+#line 109 "../src/main.vala"
 		_g_free0 (line);
-#line 72 "../src/main.vala"
+#line 109 "../src/main.vala"
 		_g_object_unref0 (data_input_stream);
-#line 72 "../src/main.vala"
+#line 109 "../src/main.vala"
 		_g_object_unref0 (_tmp1_);
-#line 72 "../src/main.vala"
+#line 109 "../src/main.vala"
 		return result;
-#line 412 "main.c"
+#line 685 "main.c"
 	}
 	goto __finally0;
 	__catch0_g_error:
 	{
 		GError* e = NULL;
 		const gchar* _tmp26_;
-#line 32 "../src/main.vala"
+#line 69 "../src/main.vala"
 		e = _inner_error0_;
-#line 32 "../src/main.vala"
+#line 69 "../src/main.vala"
 		_inner_error0_ = NULL;
-#line 74 "../src/main.vala"
+#line 111 "../src/main.vala"
 		_tmp26_ = e->message;
-#line 74 "../src/main.vala"
-		g_error ("main.vala:74: %s", _tmp26_);
-#line 32 "../src/main.vala"
+#line 111 "../src/main.vala"
+		g_error ("main.vala:111: %s", _tmp26_);
+#line 69 "../src/main.vala"
 		_g_error_free0 (e);
-#line 429 "main.c"
+#line 702 "main.c"
 	}
 	__finally0:
-#line 32 "../src/main.vala"
+#line 69 "../src/main.vala"
 	g_critical ("file %s: line %d: uncaught error: %s (%s, %d)", __FILE__, __LINE__, _inner_error0_->message, g_quark_to_string (_inner_error0_->domain), _inner_error0_->code);
-#line 32 "../src/main.vala"
+#line 69 "../src/main.vala"
 	g_clear_error (&_inner_error0_);
-#line 32 "../src/main.vala"
+#line 69 "../src/main.vala"
 	return NULL;
-#line 438 "main.c"
+#line 711 "main.c"
 }
 
 GeeMap*
@@ -447,49 +720,49 @@ retrieve_required_files (void)
 	GFile* _tmp3_;
 	GFile* _tmp4_;
 	GeeMap* result = NULL;
-#line 79 "../src/main.vala"
+#line 116 "../src/main.vala"
 	_tmp0_ = gee_hash_map_new (G_TYPE_STRING, (GBoxedCopyFunc) g_strdup, (GDestroyNotify) g_free, g_file_get_type (), (GBoxedCopyFunc) g_object_ref, (GDestroyNotify) g_object_unref, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-#line 79 "../src/main.vala"
+#line 116 "../src/main.vala"
 	required_files = (GeeMap*) _tmp0_;
-#line 80 "../src/main.vala"
+#line 117 "../src/main.vala"
 	_tmp1_ = g_file_new_for_path (DATABASE_FILENAME);
-#line 80 "../src/main.vala"
+#line 117 "../src/main.vala"
 	_tmp2_ = _tmp1_;
-#line 80 "../src/main.vala"
+#line 117 "../src/main.vala"
 	gee_map_set (required_files, DATABASE_FILENAME, _tmp2_);
-#line 80 "../src/main.vala"
+#line 117 "../src/main.vala"
 	_g_object_unref0 (_tmp2_);
-#line 81 "../src/main.vala"
+#line 118 "../src/main.vala"
 	_tmp3_ = g_file_new_for_path (PENDING_QUEUE_FILENAME);
-#line 81 "../src/main.vala"
+#line 118 "../src/main.vala"
 	_tmp4_ = _tmp3_;
-#line 81 "../src/main.vala"
+#line 118 "../src/main.vala"
 	gee_map_set (required_files, PENDING_QUEUE_FILENAME, _tmp4_);
-#line 81 "../src/main.vala"
+#line 118 "../src/main.vala"
 	_g_object_unref0 (_tmp4_);
-#line 83 "../src/main.vala"
+#line 120 "../src/main.vala"
 	result = required_files;
-#line 83 "../src/main.vala"
+#line 120 "../src/main.vala"
 	return result;
-#line 475 "main.c"
+#line 748 "main.c"
 }
 
 void
 print_page_entries (GeeMap* page_entries)
 {
-#line 86 "../src/main.vala"
+#line 123 "../src/main.vala"
 	g_return_if_fail (page_entries != NULL);
-#line 483 "main.c"
+#line 756 "main.c"
 	{
 		GeeIterator* _entry_it = NULL;
 		GeeIterator* _tmp0_;
-#line 87 "../src/main.vala"
+#line 124 "../src/main.vala"
 		_tmp0_ = gee_iterable_iterator ((GeeIterable*) page_entries);
-#line 87 "../src/main.vala"
+#line 124 "../src/main.vala"
 		_entry_it = _tmp0_;
-#line 87 "../src/main.vala"
+#line 124 "../src/main.vala"
 		while (TRUE) {
-#line 493 "main.c"
+#line 766 "main.c"
 			GeeIterator* _tmp1_;
 			GeeMapEntry* entry = NULL;
 			GeeIterator* _tmp2_;
@@ -500,41 +773,41 @@ print_page_entries (GeeMap* page_entries)
 			GeeMapEntry* _tmp7_;
 			gconstpointer _tmp8_;
 			gconstpointer _tmp9_;
-#line 87 "../src/main.vala"
+#line 124 "../src/main.vala"
 			_tmp1_ = _entry_it;
-#line 87 "../src/main.vala"
+#line 124 "../src/main.vala"
 			if (!gee_iterator_next (_tmp1_)) {
-#line 87 "../src/main.vala"
+#line 124 "../src/main.vala"
 				break;
-#line 510 "main.c"
+#line 783 "main.c"
 			}
-#line 87 "../src/main.vala"
+#line 124 "../src/main.vala"
 			_tmp2_ = _entry_it;
-#line 87 "../src/main.vala"
+#line 124 "../src/main.vala"
 			_tmp3_ = gee_iterator_get (_tmp2_);
-#line 87 "../src/main.vala"
+#line 124 "../src/main.vala"
 			entry = (GeeMapEntry*) _tmp3_;
-#line 88 "../src/main.vala"
+#line 125 "../src/main.vala"
 			_tmp4_ = entry;
-#line 88 "../src/main.vala"
+#line 125 "../src/main.vala"
 			_tmp5_ = gee_map_entry_get_key (_tmp4_);
-#line 88 "../src/main.vala"
+#line 125 "../src/main.vala"
 			_tmp6_ = _tmp5_;
-#line 88 "../src/main.vala"
+#line 125 "../src/main.vala"
 			_tmp7_ = entry;
-#line 88 "../src/main.vala"
+#line 125 "../src/main.vala"
 			_tmp8_ = gee_map_entry_get_value (_tmp7_);
-#line 88 "../src/main.vala"
+#line 125 "../src/main.vala"
 			_tmp9_ = _tmp8_;
-#line 88 "../src/main.vala"
+#line 125 "../src/main.vala"
 			g_print ("Site: %s, Hits: %u\n", (const gchar*) _tmp6_, (guint) ((guintptr) _tmp9_));
-#line 87 "../src/main.vala"
+#line 124 "../src/main.vala"
 			_g_object_unref0 (entry);
-#line 534 "main.c"
+#line 807 "main.c"
 		}
-#line 87 "../src/main.vala"
+#line 124 "../src/main.vala"
 		_g_object_unref0 (_entry_it);
-#line 538 "main.c"
+#line 811 "main.c"
 	}
 }
 
@@ -543,9 +816,9 @@ assert_required_files_exist (GeeMap* required_files,
                              GError** error)
 {
 	GError* _inner_error0_ = NULL;
-#line 92 "../src/main.vala"
+#line 129 "../src/main.vala"
 	g_return_if_fail (required_files != NULL);
-#line 549 "main.c"
+#line 822 "main.c"
 	{
 		GeeIterator* _file_it = NULL;
 		GeeCollection* _tmp0_;
@@ -553,98 +826,98 @@ assert_required_files_exist (GeeMap* required_files,
 		GeeCollection* _tmp2_;
 		GeeIterator* _tmp3_;
 		GeeIterator* _tmp4_;
-#line 93 "../src/main.vala"
+#line 130 "../src/main.vala"
 		_tmp0_ = gee_map_get_values (required_files);
-#line 93 "../src/main.vala"
+#line 130 "../src/main.vala"
 		_tmp1_ = _tmp0_;
-#line 93 "../src/main.vala"
+#line 130 "../src/main.vala"
 		_tmp2_ = _tmp1_;
-#line 93 "../src/main.vala"
+#line 130 "../src/main.vala"
 		_tmp3_ = gee_iterable_iterator ((GeeIterable*) _tmp2_);
-#line 93 "../src/main.vala"
+#line 130 "../src/main.vala"
 		_tmp4_ = _tmp3_;
-#line 93 "../src/main.vala"
+#line 130 "../src/main.vala"
 		_g_object_unref0 (_tmp2_);
-#line 93 "../src/main.vala"
+#line 130 "../src/main.vala"
 		_file_it = _tmp4_;
-#line 93 "../src/main.vala"
+#line 130 "../src/main.vala"
 		while (TRUE) {
-#line 573 "main.c"
+#line 846 "main.c"
 			GeeIterator* _tmp5_;
 			GFile* file = NULL;
 			GeeIterator* _tmp6_;
 			gpointer _tmp7_;
 			GFile* _tmp8_;
-#line 93 "../src/main.vala"
+#line 130 "../src/main.vala"
 			_tmp5_ = _file_it;
-#line 93 "../src/main.vala"
+#line 130 "../src/main.vala"
 			if (!gee_iterator_next (_tmp5_)) {
-#line 93 "../src/main.vala"
+#line 130 "../src/main.vala"
 				break;
-#line 585 "main.c"
+#line 858 "main.c"
 			}
-#line 93 "../src/main.vala"
+#line 130 "../src/main.vala"
 			_tmp6_ = _file_it;
-#line 93 "../src/main.vala"
+#line 130 "../src/main.vala"
 			_tmp7_ = gee_iterator_get (_tmp6_);
-#line 93 "../src/main.vala"
+#line 130 "../src/main.vala"
 			file = (GFile*) _tmp7_;
-#line 94 "../src/main.vala"
+#line 131 "../src/main.vala"
 			_tmp8_ = file;
-#line 94 "../src/main.vala"
+#line 131 "../src/main.vala"
 			if (!g_file_query_exists (_tmp8_, NULL)) {
-#line 597 "main.c"
+#line 870 "main.c"
 				GFile* _tmp9_;
 				gchar* _tmp10_;
 				gchar* _tmp11_;
 				GError* _tmp12_;
 				GError* _tmp13_;
-#line 95 "../src/main.vala"
+#line 132 "../src/main.vala"
 				_tmp9_ = file;
-#line 95 "../src/main.vala"
+#line 132 "../src/main.vala"
 				_tmp10_ = g_file_get_path (_tmp9_);
-#line 95 "../src/main.vala"
+#line 132 "../src/main.vala"
 				_tmp11_ = _tmp10_;
-#line 95 "../src/main.vala"
+#line 132 "../src/main.vala"
 				_tmp12_ = g_error_new (G_IO_ERROR, G_IO_ERROR_NOT_FOUND, "Required file not found %s", _tmp11_);
-#line 95 "../src/main.vala"
+#line 132 "../src/main.vala"
 				_tmp13_ = _tmp12_;
-#line 95 "../src/main.vala"
+#line 132 "../src/main.vala"
 				_g_free0 (_tmp11_);
-#line 95 "../src/main.vala"
+#line 132 "../src/main.vala"
 				_inner_error0_ = _tmp13_;
-#line 95 "../src/main.vala"
+#line 132 "../src/main.vala"
 				if (_inner_error0_->domain == G_IO_ERROR) {
-#line 95 "../src/main.vala"
+#line 132 "../src/main.vala"
 					g_propagate_error (error, _inner_error0_);
-#line 95 "../src/main.vala"
+#line 132 "../src/main.vala"
 					_g_object_unref0 (file);
-#line 95 "../src/main.vala"
+#line 132 "../src/main.vala"
 					_g_object_unref0 (_file_it);
-#line 95 "../src/main.vala"
+#line 132 "../src/main.vala"
 					return;
-#line 627 "main.c"
+#line 900 "main.c"
 				} else {
-#line 95 "../src/main.vala"
+#line 132 "../src/main.vala"
 					_g_object_unref0 (file);
-#line 95 "../src/main.vala"
+#line 132 "../src/main.vala"
 					_g_object_unref0 (_file_it);
-#line 95 "../src/main.vala"
+#line 132 "../src/main.vala"
 					g_critical ("file %s: line %d: uncaught error: %s (%s, %d)", __FILE__, __LINE__, _inner_error0_->message, g_quark_to_string (_inner_error0_->domain), _inner_error0_->code);
-#line 95 "../src/main.vala"
+#line 132 "../src/main.vala"
 					g_clear_error (&_inner_error0_);
-#line 95 "../src/main.vala"
+#line 132 "../src/main.vala"
 					return;
-#line 639 "main.c"
+#line 912 "main.c"
 				}
 			}
-#line 93 "../src/main.vala"
+#line 130 "../src/main.vala"
 			_g_object_unref0 (file);
-#line 644 "main.c"
+#line 917 "main.c"
 		}
-#line 93 "../src/main.vala"
+#line 130 "../src/main.vala"
 		_g_object_unref0 (_file_it);
-#line 648 "main.c"
+#line 921 "main.c"
 	}
 }
 

@@ -11,7 +11,7 @@ const string PENDING_QUEUE_FILENAME = "pending-hits.csv";
 // Every URL in the file should be added to a tally map.
 // The tally map values will be added to the page_entries map
 // Lastly, the old page entries database will be replaced
-// with a new one, reflecting the updated page_entries map data.
+// with a new one, reflecting the updated page_entries map data!
 
 int main(string[] args) {
     Map<string, File> required_files = retrieve_required_files ();
@@ -22,23 +22,60 @@ int main(string[] args) {
         error ("Error: %s", e.message);
     }
 
-    Map<string, uint> page_entries = load_page_entries(required_files[DATABASE_FILENAME]);
+    Map<string, uint> page_entries = load_page_entries (required_files[DATABASE_FILENAME]);
+    print_page_entries (page_entries);
+
+    Iterable<string> pending_hits = load_pending_hits (required_files[PENDING_QUEUE_FILENAME]);
+    apply_pending_hits_to (page_entries, pending_hits);
+
+    print ("Update page entries:");
     print_page_entries (page_entries);
 
     return 0;
 }
 
-Map<string, uint> load_page_entries (File database_file) {
-     try {
-        Map<string, uint> page_entries = new HashMap<string, uint> (); 
+void apply_pending_hits_to (Map<string, uint> page_entries, Iterable<string> pending_hits) {
+    foreach (string url in pending_hits) {
+        page_entries[url] = page_entries.has_key(url) ? 
+            page_entries[url] + 1 :
+            1;  
+    }
+}
+
+Iterable<string> load_pending_hits (File pending_hits_file) {
+    AbstractCollection<string> pending_hits = new ArrayList<string> ();
+
+    try {
+        var data_input_stream = new DataInputStream (pending_hits_file.read ());
+
+        string line;
+
+        while (( line = data_input_stream.read_line (null)) != null) {
+            if (line.strip() == "") {
+                continue;
+            }
+
+            pending_hits.add (line);
+        }
+
+        return pending_hits;
         
+    } catch (Error e) {
+        error ("%s", e.message);
+    }
+}
+
+Map<string, uint> load_page_entries (File database_file) {
+    try {
+        Map<string, uint> page_entries = new HashMap<string, uint> (); 
+
         // Open file for reading and wrap returned FileInputStream into a
         // DataInputStream, so we can read line by line
         var data_input_stream = new DataInputStream (database_file.read ());
-        
+
         int url_position = -1;
         int hits_position = -1;
-        
+
         string line;
         bool is_first_line = true;
 
@@ -52,18 +89,18 @@ Map<string, uint> load_page_entries (File database_file) {
                     error ("url and hits keys are not both defined");    
                 }
 
-                page_entries[row[url_position]] = uint.parse(row[hits_position]);
+                page_entries[row[url_position]] = uint.parse (row[hits_position]);
                 continue;
             }
 
             for (int i = row.length - 1; i>=0; i--) {
                 switch (row[i]) {
                     case URL_KEY:
-                        url_position = i;
-                        continue;
+                    url_position = i;
+                    continue;
                     case HITS_KEY:
-                        hits_position = i;
-                        continue;
+                    hits_position = i;
+                    continue;
                 }
             }
             is_first_line = false;
