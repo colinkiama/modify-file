@@ -4,6 +4,7 @@ const string URL_KEY = "url";
 const string HITS_KEY = "hits";
 
 const string DATABASE_FILENAME = "hits.csv";
+const string TEMP_DATABASE_FILENAME = "temp-hits.csv";
 const string PENDING_QUEUE_FILENAME = "pending-hits.csv";
 
 // TODO: Load from another file that is a list of urls. 
@@ -28,10 +29,61 @@ int main(string[] args) {
     Iterable<string> pending_hits = load_pending_hits (required_files[PENDING_QUEUE_FILENAME]);
     apply_pending_hits_to (page_entries, pending_hits);
 
-    print ("Update page entries:");
+    print ("Updated page entries!\n");
     print_page_entries (page_entries);
 
+    try {
+        save_page_entries (page_entries, required_files);
+    } catch (Error e) {
+        error ("%s", e.message);        
+    }
+
     return 0;
+}
+
+void save_page_entries (Map<string, uint> page_entries, Map<string, File> required_files) throws IOError {
+    try {
+        var save_file = File.new_for_path (TEMP_DATABASE_FILENAME);
+       
+        // Test for the existence of file
+        if (save_file.query_exists ()) {
+            save_file.delete();
+        }
+
+        var file_stream = save_file.create (FileCreateFlags.REPLACE_DESTINATION);
+
+        // Write data to file
+        var data_output_stream = new DataOutputStream (new BufferedOutputStream.sized (file_stream, 65536));
+        string text_to_save = generate_page_entries_text (page_entries);
+
+        uint8[] data = text_to_save.data;
+        long written = 0;
+
+        while (written < data.length) { 
+            // sum of the bytes of 'text' that already have been written to the stream
+            written += data_output_stream.write (data[written:data.length]);
+        }
+
+        required_files[DATABASE_FILENAME].delete();
+
+        var renamedFile = save_file.set_display_name(DATABASE_FILENAME);
+        required_files[DATABASE_FILENAME] = renamedFile;
+    } catch (Error e) {
+        error ("%s", e.message);
+    } 
+}
+
+string generate_page_entries_text (Map<string, uint> page_entries) {
+    const string header = "url,hits\n";
+
+    StringBuilder string_builder = new StringBuilder();
+    string_builder.append (header);
+
+    foreach (var entry in page_entries) {
+        string_builder.append_printf ("%s,%u\n", entry.key, entry.value);
+    }
+
+    return string_builder.str;
 }
 
 void apply_pending_hits_to (Map<string, uint> page_entries, Iterable<string> pending_hits) {
@@ -59,7 +111,6 @@ Iterable<string> load_pending_hits (File pending_hits_file) {
         }
 
         return pending_hits;
-        
     } catch (Error e) {
         error ("%s", e.message);
     }
